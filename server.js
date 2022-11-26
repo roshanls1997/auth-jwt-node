@@ -1,28 +1,46 @@
 require("dotenv").config();
 const express = require("express");
 const jwt = require("jsonwebtoken");
+require("./db");
+const PostSchema = require("./models/post");
+
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 3000;
-const posts = [];
 
-app.get("/posts", auth, (req, res) => {
+app.get("/posts", auth, async (req, res) => {
   try {
-    const fileteredPosts = posts.filter(
-      (post) => post.createdBy === req.user.name
-    );
-    res.status(200).send(fileteredPosts);
+    const posts = await PostSchema.find();
+
+    res.status(200).send(posts);
+  } catch (e) {
+    res.status(500).send("Error");
+    console.error("something went wrong /posts GET", e);
+  }
+});
+app.get("/posts/:id", auth, async (req, res) => {
+  try {
+    const posts = await PostSchema.find({ _id: req.params.id });
+
+    res.status(200).send(posts);
   } catch (e) {
     res.status(500).send("Error");
     console.error("something went wrong /posts GET", e);
   }
 });
 
-app.post("/posts", (req, res) => {
-  const { created_by, title } = req.body;
+app.post("/posts", auth, async (req, res) => {
+  const { title, desc } = req.body;
+  const { id, name } = req.user;
   try {
-    posts.push({ createdBy: created_by, title });
-    res.status(201).send("Success");
+    const postSchema = new PostSchema({
+      title,
+      desc,
+      created_by: name,
+      created_by_id: id,
+    });
+    const post = await postSchema.save();
+    res.status(201).json(post);
   } catch (e) {
     console.error("something went wrong /posts POST", e);
     res.status(500).send("Error");
@@ -34,7 +52,6 @@ function auth(req, res, next) {
   const token = authHeader && authHeader.split(" ")[1];
   if (token == null) return res.status(401).send("Not Authorized");
   jwt.verify(token, process.env.JWT_ACCESS_TOKEN, (error, user) => {
-    console.log(error);
     if (error) return res.status(401).send("Not Authorized");
     req.user = user;
     next();
