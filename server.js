@@ -6,7 +6,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const posts = [];
 
-app.get("/posts", auth, b, (req, res) => {
+app.get("/posts", auth, (req, res) => {
   try {
     const fileteredPosts = posts.filter(
       (post) => post.createdBy === req.user.name
@@ -39,10 +39,6 @@ function auth(req, res, next) {
     req.user = user;
     next();
   });
-}
-function b(req, res, next) {
-  console.log("comes here", req);
-  next();
 }
 
 app.listen(PORT, () =>
