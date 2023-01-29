@@ -41,7 +41,6 @@ app.post("/token", async (req, res) => {
   const token = req.body.token;
   if (token == null) return res.status(401).send("Not Authorized 1");
   let refreshToken = await TokenSchema.find({ refresh_token: token });
-  console.log(refreshToken);
   refreshToken = refreshToken[0];
   if (refreshToken == null) return res.status(401).send("Not Authorized 1");
   jwt.verify(
